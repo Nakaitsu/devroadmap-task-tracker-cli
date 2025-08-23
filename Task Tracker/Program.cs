@@ -83,6 +83,36 @@ try
 
                     break;
                 }
+            case "mark-in-progress":
+                {
+                    var database = GetDatabase();
+
+                    var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
+
+                    if (taskToUpdate is null)
+                        return;
+
+                    taskToUpdate.Status = Status.InProgress;
+
+                    File.WriteAllText(SystemDatabase.FileName, JsonSerializer.Serialize(database, jsonOptions));
+
+                    break;
+                }
+            case "mark-done":
+                {
+                    var database = GetDatabase();
+
+                    var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
+
+                    if (taskToUpdate is null)
+                        return;
+
+                    taskToUpdate.Status = Status.Done;
+
+                    File.WriteAllText(SystemDatabase.FileName, JsonSerializer.Serialize(database, jsonOptions));
+
+                    break;
+                }
             default:
                 Console.WriteLine("Invalid command");
                 break;
