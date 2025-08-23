@@ -12,7 +12,7 @@ namespace Task_Tracker
     {
         public static readonly string FileName = "database.json";
         public uint LastInsertedId { get; set; } = 0;
-        public ICollection<Task> Tasks { get; set; } = new List<Task>();
+        public ICollection<Task> Tasks { get; set; } = [];
 
         public void Save()
         {

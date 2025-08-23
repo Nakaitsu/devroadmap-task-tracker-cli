@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Data;
+using System.IO.Pipes;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -62,8 +64,22 @@ try
             case "list":
                 {
                     var database = SystemDatabase.GetDatabase();
+                    var tasks = database.Tasks;
 
-                    foreach (var task in database.Tasks)
+                    if(args.Length >= 2)
+                    {
+                        var filteredTasks = args[1] switch
+                        {
+                            "done" => database.Tasks.Where(x => x.Status == Status.Done).ToList(),
+                            "todo" => database.Tasks.Where(x => x.Status == Status.Todo).ToList(),
+                            "in-progress" => database.Tasks.Where(x => x.Status == Status.InProgress).ToList(),
+                            _ => database.Tasks
+                        };
+
+                        tasks = filteredTasks;
+                    }
+
+                    foreach (var task in tasks)
                     {
                         var sb = new StringBuilder();
 
@@ -108,7 +124,7 @@ try
                     break;
                 }
             default:
-                Console.WriteLine("Invalid command");
+                Console.WriteLine("Unkown command");
                 break;
         }
     }
