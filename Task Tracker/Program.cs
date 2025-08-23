@@ -8,11 +8,6 @@ try
 {
     if (args.Length > 0)
     {
-        var jsonOptions = new JsonSerializerOptions()
-        {
-            WriteIndented = true
-        };
-
         switch (args[0])
         {
             case "add":
@@ -23,12 +18,12 @@ try
                         Description = args[1]
                     };
 
-                    var database = GetDatabase();
+                    var database = SystemDatabase.GetDatabase();
 
                     newTask.Id = ++database.LastInsertedId;
                     database.Tasks.Add(newTask);
 
-                    File.WriteAllText(SystemDatabase.FileName, JsonSerializer.Serialize(database, jsonOptions));
+                    database.Save();
 
                     Console.WriteLine($"Task added successfully (ID: {newTask.Id})");
                 }
@@ -37,7 +32,7 @@ try
             case "update":
                 if (args.Length >= 3)
                 {
-                    var database = GetDatabase();
+                    var database = SystemDatabase.GetDatabase();
 
                     var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
 
@@ -47,13 +42,13 @@ try
                     taskToUpdate.Description = args[2];
                     taskToUpdate.UpdateAt = DateTime.Now;
 
-                    File.WriteAllText(SystemDatabase.FileName, JsonSerializer.Serialize(database, jsonOptions));
+                    database.Save();
                 }
                 break;
             case "delete":
                 if (args.Length >= 2)
                 {
-                    var database = GetDatabase();
+                    var database = SystemDatabase.GetDatabase();
 
                     var taskToDelete = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
 
@@ -61,13 +56,12 @@ try
                         return;
 
                     database.Tasks.Remove(taskToDelete);
-
-                    File.WriteAllText(SystemDatabase.FileName, JsonSerializer.Serialize(database, jsonOptions));
+                    database.Save();
                 }
                 break;
             case "list":
                 {
-                    var database = GetDatabase();
+                    var database = SystemDatabase.GetDatabase();
 
                     foreach (var task in database.Tasks)
                     {
@@ -85,7 +79,7 @@ try
                 }
             case "mark-in-progress":
                 {
-                    var database = GetDatabase();
+                    var database = SystemDatabase.GetDatabase();
 
                     var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
 
@@ -94,13 +88,13 @@ try
 
                     taskToUpdate.Status = Status.InProgress;
 
-                    File.WriteAllText(SystemDatabase.FileName, JsonSerializer.Serialize(database, jsonOptions));
+                    database.Save();
 
                     break;
                 }
             case "mark-done":
                 {
-                    var database = GetDatabase();
+                    var database = SystemDatabase.GetDatabase();
 
                     var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
 
@@ -109,7 +103,7 @@ try
 
                     taskToUpdate.Status = Status.Done;
 
-                    File.WriteAllText(SystemDatabase.FileName, JsonSerializer.Serialize(database, jsonOptions));
+                    database.Save();
 
                     break;
                 }
@@ -125,24 +119,3 @@ catch (Exception ex)
 }
 
 // TODO centralized database write function
-
-static SystemDatabase GetDatabase()
-{
-    try
-    {
-        if (!File.Exists(SystemDatabase.FileName))
-            File.WriteAllText(SystemDatabase.FileName, string.Empty);
-
-        var content = File.ReadAllText(SystemDatabase.FileName);
-        // TODO melhorar essa chamada, carregar todas tasks em memória não é interessante
-        var database = string.IsNullOrEmpty(content)
-            ? new SystemDatabase()
-            : JsonSerializer.Deserialize<SystemDatabase>(content);
-
-        return database;
-    }
-    catch (Exception)
-    {
-        throw;
-    }
-}
