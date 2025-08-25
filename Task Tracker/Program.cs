@@ -4,27 +4,24 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Task_Tracker;
 
 try
 {
     if (args.Length > 0)
     {
-        switch (args[0])
+        switch (args[0].Trim())
         {
             case "add":
                 if (args.Length >= 2)
                 {
-                    var newTask = new Task_Tracker.Task
-                    {
-                        Description = args[1]
-                    };
-
                     var database = SystemDatabase.GetDatabase();
 
+                    var newTask = new Task_Tracker.Task(args[1].Trim());
                     newTask.Id = ++database.LastInsertedId;
-                    database.Tasks.Add(newTask);
 
+                    database.Tasks.Add(newTask);
                     database.Save();
 
                     Console.WriteLine($"Task added successfully (ID: {newTask.Id})");
@@ -36,12 +33,13 @@ try
                 {
                     var database = SystemDatabase.GetDatabase();
 
-                    var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
+                    if (!int.TryParse(args[1].Trim(), out var taskId))
+                        throw new ArgumentException("The id value is invalid!");
 
-                    if (taskToUpdate is null)
-                        return;
+                    var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == taskId)
+                        ?? throw new Exception($"No task was found for the provided id: {taskId}");
 
-                    taskToUpdate.Description = args[2];
+                    taskToUpdate.Description = args[2].Trim();
                     taskToUpdate.UpdateAt = DateTime.Now;
 
                     database.Save();
@@ -52,10 +50,11 @@ try
                 {
                     var database = SystemDatabase.GetDatabase();
 
-                    var taskToDelete = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
+                    if (!int.TryParse(args[1].Trim(), out var taskId))
+                        throw new ArgumentException("The id value is invalid!");
 
-                    if (taskToDelete is null)
-                        return;
+                    var taskToDelete = database.Tasks.FirstOrDefault(x => x.Id == taskId)
+                        ?? throw new Exception($"No task was found for the provided id: {taskId}");
 
                     database.Tasks.Remove(taskToDelete);
                     database.Save();
@@ -68,7 +67,7 @@ try
 
                     if(args.Length >= 2)
                     {
-                        var filteredTasks = args[1] switch
+                        var filteredTasks = args[1].Trim() switch
                         {
                             "done" => database.Tasks.Where(x => x.Status == Status.Done).ToList(),
                             "todo" => database.Tasks.Where(x => x.Status == Status.Todo).ToList(),
@@ -86,7 +85,7 @@ try
                         var props = task.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
                         foreach (var prop in props)
-                            sb.Append($"{prop.Name}:'{prop.GetValue(task, null)}'  ");
+                            sb.Append($"{prop.Name}:'{prop.GetValue(task, null)}' | ");
 
                         Console.WriteLine(sb.ToString());
                     }
@@ -97,10 +96,11 @@ try
                 {
                     var database = SystemDatabase.GetDatabase();
 
-                    var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
+                    if (!int.TryParse(args[1].Trim(), out var taskId))
+                        throw new ArgumentException("The id value is invalid!");
 
-                    if (taskToUpdate is null)
-                        return;
+                    var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == taskId)
+                        ?? throw new Exception($"No task was found for the provided id: {taskId}");
 
                     taskToUpdate.Status = Status.InProgress;
 
@@ -112,10 +112,11 @@ try
                 {
                     var database = SystemDatabase.GetDatabase();
 
-                    var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == int.Parse(args[1]));
+                    if (!int.TryParse(args[1].Trim(), out var taskId))
+                        throw new ArgumentException("The id value is invalid!");
 
-                    if (taskToUpdate is null)
-                        return;
+                    var taskToUpdate = database.Tasks.FirstOrDefault(x => x.Id == taskId)
+                        ?? throw new Exception($"No task was found for the provided id: {taskId}");
 
                     taskToUpdate.Status = Status.Done;
 
@@ -131,7 +132,5 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine(ex.Message);
+    Console.WriteLine($"Somenthing went wrong! {ex.Message}");
 }
-
-// TODO centralized database write function
